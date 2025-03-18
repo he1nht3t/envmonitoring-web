@@ -1,103 +1,234 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
+import DashboardLayout from '@/components/DashboardLayout';
+import DeviceMap from '@/components/DeviceMap';
+import { SensorGrid } from '@/components/SensorCard';
+import SensorChart from '@/components/SensorChart';
+import DeviceSelector from '@/components/DeviceSelector';
+import SensorTable from '@/components/SensorTable';
+import { SensorData, fetchLatestSensorData, fetchSensorData, subscribeToSensorData } from '@/lib/supabase';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useDeviceContext } from '@/context/DeviceContext';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { devices, selectedDeviceId, setSelectedDeviceId, loading: devicesLoading } = useDeviceContext();
+  const [latestSensorData, setLatestSensorData] = useState<Record<string, SensorData>>({});
+  const [deviceSensorData, setDeviceSensorData] = useState<SensorData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Fetch latest sensor data on component mount
+  useEffect(() => {
+    async function loadInitialData() {
+      try {
+        setLoading(true);
+        
+        // Fetch latest sensor data for all devices
+        const latestData = await fetchLatestSensorData();
+        console.log('Latest sensor data loaded:', latestData.length);
+        
+        // Convert array to record with device_id as key
+        const latestByDevice = latestData.reduce((acc, item) => {
+          acc[item.device_id] = item;
+          return acc;
+        }, {} as Record<string, SensorData>);
+        
+        setLatestSensorData(latestByDevice);
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadInitialData();
+    
+    // Subscribe to real-time updates
+    const subscription = subscribeToSensorData((payload) => {
+      console.log('Real-time update received:', payload);
+      const newReading = payload.new as SensorData;
+      
+      // Update latest sensor data for the device
+      setLatestSensorData(prev => ({
+        ...prev,
+        [newReading.device_id]: newReading
+      }));
+      
+      // If this is for the selected device, add it to the device sensor data
+      if (newReading.device_id === selectedDeviceId) {
+        setDeviceSensorData(prev => [newReading, ...prev]);
+      }
+    });
+    
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [selectedDeviceId]);
+  
+  // Fetch sensor data when selected device changes
+  useEffect(() => {
+    async function loadDeviceData() {
+      if (!selectedDeviceId) return;
+      
+      try {
+        console.log('Loading sensor data for device:', selectedDeviceId);
+        const data = await fetchSensorData(selectedDeviceId, 100);
+        console.log('Sensor data loaded:', data.length);
+        setDeviceSensorData(data);
+      } catch (error) {
+        console.error('Error loading device data:', error);
+      }
+    }
+    
+    loadDeviceData();
+  }, [selectedDeviceId]);
+  
+  // Get the selected device name
+  const getSelectedDeviceName = () => {
+    const device = devices.find(d => d.id === selectedDeviceId);
+    return device ? device.name : 'Unknown Device';
+  };
+
+  // Filter data to show only the last 5 minutes
+  const getRecentData = () => {
+    if (!deviceSensorData.length) return [];
+    
+    const fiveMinutesAgo = new Date();
+    fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+    
+    return deviceSensorData.filter(reading => 
+      new Date(reading.created_at) >= fiveMinutesAgo
+    );
+  };
+
+  if (loading || devicesLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[80vh]">
+          <p className="text-xl">Loading dashboard data...</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Get recent data for charts
+  const recentData = getRecentData();
+  const hasRecentData = recentData.length > 0;
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Environmental Monitoring Dashboard</h1>
+        </div>
+        
+        {/* Map showing all devices */}
+        <DeviceMap devices={devices} sensorData={latestSensorData} />
+        
+        {/* Device selector and current readings */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Device selector */}
+            <DeviceSelector />
+          </div>
+          
+          {/* Overview stats for selected device */}
+          {selectedDeviceId && latestSensorData[selectedDeviceId] && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{getSelectedDeviceName()} - Current Readings</CardTitle>
+                <CardDescription>
+                  Last updated: {new Date(latestSensorData[selectedDeviceId].created_at).toLocaleString()}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SensorGrid sensorData={latestSensorData[selectedDeviceId]} />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+        
+        {/* Tabs for different views */}
+        <Tabs defaultValue="charts">
+          <TabsList>
+            <TabsTrigger value="charts">Charts</TabsTrigger>
+            <TabsTrigger value="table">Table</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="charts">
+            {!hasRecentData && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+                <p className="text-yellow-800">No data from the last 5 minutes is available. Showing all available data instead.</p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Temperature & Humidity Chart */}
+              <SensorChart 
+                data={hasRecentData ? recentData : deviceSensorData} 
+                title="Temperature & Humidity (Last 5 min)" 
+                sensorTypes={[
+                  { key: 'temperature', color: '#f97316', label: 'Temperature' },
+                  { key: 'humidity', color: '#3b82f6', label: 'Humidity' }
+                ]}
+                unit="°C / %" 
+              />
+              
+              {/* CO & CO2 Chart */}
+              <SensorChart 
+                data={hasRecentData ? recentData : deviceSensorData} 
+                title="CO & CO2 (Last 5 min)" 
+                sensorTypes={[
+                  { key: 'co', color: '#ef4444', label: 'CO' },
+                  { key: 'co2', color: '#6b7280', label: 'CO2' }
+                ]}
+                unit="ppm" 
+              />
+              
+              {/* NH3 & LPG Chart */}
+              <SensorChart 
+                data={hasRecentData ? recentData : deviceSensorData} 
+                title="NH3 & LPG (Last 5 min)" 
+                sensorTypes={[
+                  { key: 'nh3', color: '#8b5cf6', label: 'NH3' },
+                  { key: 'lpg', color: '#10b981', label: 'LPG' }
+                ]}
+                unit="ppm" 
+              />
+              
+              {/* Smoke & Alcohol Chart */}
+              <SensorChart 
+                data={hasRecentData ? recentData : deviceSensorData} 
+                title="Smoke & Alcohol (Last 5 min)" 
+                sensorTypes={[
+                  { key: 'smoke', color: '#64748b', label: 'Smoke' },
+                  { key: 'alcohol', color: '#ec4899', label: 'Alcohol' }
+                ]}
+                unit="ppm" 
+              />
+              
+              {/* Rain & Sound Intensity Chart */}
+              <SensorChart 
+                data={hasRecentData ? recentData : deviceSensorData} 
+                title="Rain & Sound Intensity (Last 5 min)" 
+                sensorTypes={[
+                  { key: 'rain_intensity', color: '#0ea5e9', label: 'Rain' },
+                  { key: 'sound_intensity', color: '#fbbf24', label: 'Sound' }
+                ]}
+                unit="Intensity" 
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="table">
+            <SensorTable 
+              data={deviceSensorData} 
+              deviceName={getSelectedDeviceName()} 
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </DashboardLayout>
   );
 }
