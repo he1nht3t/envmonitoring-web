@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useDeviceContext } from '@/context/DeviceContext';
 
 export default function Home() {
-  const { devices, selectedDeviceId, setSelectedDeviceId, loading: devicesLoading } = useDeviceContext();
+  const { devices, selectedDeviceId, loading: devicesLoading } = useDeviceContext();
   const [latestSensorData, setLatestSensorData] = useState<Record<string, SensorData>>({});
   const [deviceSensorData, setDeviceSensorData] = useState<SensorData[]>([]);
   const [loading, setLoading] = useState(true);

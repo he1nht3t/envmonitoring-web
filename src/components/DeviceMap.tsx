@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Device, SensorData } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import dynamic from 'next/dynamic';
@@ -34,4 +33,4 @@ export default function DeviceMap({ devices, sensorData }: DeviceMapProps) {
       </CardContent>
     </Card>
   );
-} 
+}

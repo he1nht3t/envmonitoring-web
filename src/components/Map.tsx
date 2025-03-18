@@ -47,7 +47,7 @@ function FitBoundsToMarkers({ devices }: { devices: Device[] }) {
       try {
         // Create bounds from device coordinates
         const bounds = devices.map(device => [device.lat, device.long]);
-        map.fitBounds(bounds as any);
+        map.fitBounds(bounds as [number, number][]);
       } catch (error) {
         console.error('Error fitting bounds:', error);
       }
@@ -142,4 +142,4 @@ const Map = ({ devices, sensorData }: MapProps) => {
   );
 };
 
-export default Map; 
+export default Map;

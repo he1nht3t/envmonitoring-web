@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Download } from 'lucide-react';
-import { cn } from '@/lib/utils';
+
 import { DateRange } from 'react-day-picker';
 
 interface SensorTableProps {
@@ -97,26 +97,28 @@ export default function SensorTable({ data, deviceName }: SensorTableProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <CardTitle>Recent Readings: {deviceName}</CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                <span>
-                  {dateRange?.from ? (
-                    dateRange.to ? (
-                      <>
-                        {format(dateRange.from, 'LLL dd, y')} - {format(dateRange.to, 'LLL dd, y')}
-                      </>
+              <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  <span>
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, 'LLL dd, y')} - {format(dateRange.to, 'LLL dd, y')}
+                        </>
+                      ) : (
+                        format(dateRange.from, 'LLL dd, y')
+                      )
                     ) : (
-                      format(dateRange.from, 'LLL dd, y')
-                    )
-                  ) : (
-                    'Filter by date'
-                  )}
-                </span>
+                      'Filter by date'
+                    )}
+                  </span>
+                </div>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
@@ -131,9 +133,11 @@ export default function SensorTable({ data, deviceName }: SensorTableProps) {
             </PopoverContent>
           </Popover>
           
-          <Button variant="outline" onClick={downloadCSV} className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            <span>Download CSV</span>
+          <Button variant="outline" onClick={downloadCSV} className="flex items-center gap-2 w-full sm:w-auto justify-between">
+            <div className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              <span>Download CSV</span>
+            </div>
           </Button>
         </div>
       </CardHeader>
@@ -183,4 +187,4 @@ export default function SensorTable({ data, deviceName }: SensorTableProps) {
       </CardContent>
     </Card>
   );
-} 
+}

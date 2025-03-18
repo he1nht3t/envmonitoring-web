@@ -25,7 +25,7 @@ import { format } from 'date-fns';
 import { useDeviceContext } from '@/context/DeviceContext';
 
 export default function AnalyticsPage() {
-  const { devices, selectedDeviceId, setSelectedDeviceId, loading: devicesLoading } = useDeviceContext();
+  const { devices, selectedDeviceId, loading: devicesLoading } = useDeviceContext();
   const [sensorData, setSensorData] = useState<SensorData[]>([]);
   const [loading, setLoading] = useState(true);
   

@@ -24,7 +24,7 @@ export default function SensorChart({ data, sensorTypes, title, unit }: SensorCh
 
   // Format data for the chart
   const chartData = sortedData.map(item => {
-    const formattedItem: any = {
+    const formattedItem: Record<string, string | number> = {
       time: format(new Date(item.created_at), 'mm:ss'),
       fullTime: format(new Date(item.created_at), 'HH:mm:ss'),
       timestamp: new Date(item.created_at).getTime(),
@@ -64,11 +64,11 @@ export default function SensorChart({ data, sensorTypes, title, unit }: SensorCh
               label={{ value: unit, angle: -90, position: 'insideLeft' }} 
             />
             <Tooltip 
-              labelFormatter={(value, entry) => {
+              labelFormatter={(value) => {
                 const dataEntry = chartData.find(item => item.time === value);
                 return `Time: ${dataEntry?.fullTime || value}`;
               }}
-              formatter={(value, name, props) => {
+              formatter={(value, name) => {
                 const sensorType = sensorTypes.find(type => type.key === name);
                 return [`${value} ${unit}`, sensorType?.label || name];
               }}
@@ -89,4 +89,4 @@ export default function SensorChart({ data, sensorTypes, title, unit }: SensorCh
       </CardContent>
     </Card>
   );
-} 
+}

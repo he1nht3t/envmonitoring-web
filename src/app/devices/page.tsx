@@ -1,8 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-import { fetchDevices } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import DeviceMap from '@/components/DeviceMap';
@@ -68,4 +66,4 @@ export default function DevicesPage() {
       </div>
     </DashboardLayout>
   );
-} 
+}

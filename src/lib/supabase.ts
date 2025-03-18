@@ -86,7 +86,7 @@ export async function fetchLatestSensorData() {
 }
 
 // Subscribe to real-time updates for sensor data
-export function subscribeToSensorData(callback: (payload: any) => void) {
+export function subscribeToSensorData(callback: (payload: { new: SensorData }) => void) {
   return supabase
     .channel('sensor_data_changes')
     .on('postgres_changes', { 
@@ -95,4 +95,4 @@ export function subscribeToSensorData(callback: (payload: any) => void) {
       table: 'sensor_data' 
     }, callback)
     .subscribe();
-} 
+}

@@ -37,7 +37,7 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
     }
     
     loadDevices();
-  }, []);
+  }, [selectedDeviceId]);
 
   // Save selected device to localStorage when it changes
   useEffect(() => {
@@ -52,7 +52,7 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
     if (savedDeviceId) {
       setSelectedDeviceId(savedDeviceId);
     }
-  }, []);
+  }, [selectedDeviceId]);
 
   return (
     <DeviceContext.Provider value={{ devices, selectedDeviceId, setSelectedDeviceId, loading }}>
@@ -67,4 +67,4 @@ export function useDeviceContext() {
     throw new Error('useDeviceContext must be used within a DeviceProvider');
   }
   return context;
-} 
+}

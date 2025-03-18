@@ -1,6 +1,6 @@
 'use client';
 
-import { Device } from '@/lib/supabase';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDeviceContext } from '@/context/DeviceContext';
@@ -29,4 +29,4 @@ export default function DeviceSelector() {
       </CardContent>
     </Card>
   );
-} 
+}
