@@ -24,25 +24,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="container mx-auto px-4 flex h-16 items-center justify-between py-4">
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6"
-              >
-                <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9" />
-                <path d="M13 11h2v6" />
-                <path d="M13 17h6" />
-                <path d="M9 12v5" />
-                <path d="M6 9v8" />
-                <path d="M3 13v4" />
-              </svg>
+              <img
+                src="/env-monitor.svg"
+                alt="Environmental Monitoring Logo"
+                width={36}
+                height={36}
+                className="h-13 w-13"
+              />
               <span className="font-bold">Environmental Monitoring</span>
             </Link>
           </div>
@@ -88,4 +76,4 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </footer>
     </div>
   );
-} 
+}
