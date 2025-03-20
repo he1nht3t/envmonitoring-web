@@ -146,9 +146,9 @@ const Map = ({ devices, sensorData, focusSelectedDevice = false, selectedDeviceI
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
-                        <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-gray-600">Sound:</span> 
-                          <span className="font-medium ml-2">{deviceData.sound_intensity.toFixed(1)} dB</span>
+                      <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">LPG:</span> 
+                          <span className="font-medium ml-2">{deviceData.lpg.toFixed(1)} ppm</span>
                         </div>
                         <div className="flex justify-between items-center border-b pb-1">
                           <span className="text-gray-600">NH3:</span> 
@@ -156,9 +156,10 @@ const Map = ({ devices, sensorData, focusSelectedDevice = false, selectedDeviceI
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
+                        
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-gray-600">LPG:</span> 
-                          <span className="font-medium ml-2">{deviceData.lpg.toFixed(1)} ppm</span>
+                          <span className="text-gray-600">Alcohol:</span> 
+                          <span className="font-medium ml-2">{deviceData.alcohol.toFixed(1)} ppm</span>
                         </div>
                         <div className="flex justify-between items-center border-b pb-1">
                           <span className="text-gray-600">Smoke:</span> 
@@ -166,9 +167,14 @@ const Map = ({ devices, sensorData, focusSelectedDevice = false, selectedDeviceI
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
+                        
                         <div className="flex justify-between items-center border-b pb-1">
-                          <span className="text-gray-600">Alcohol:</span> 
-                          <span className="font-medium ml-2">{deviceData.alcohol.toFixed(1)} ppm</span>
+                          <span className="text-gray-600">Sound:</span> 
+                          <span className="font-medium ml-2">{deviceData.sound_intensity.toFixed(1)} dB</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">Rain:</span> 
+                          <span className="font-medium ml-2">{deviceData.rain_intensity.toFixed(1)} mm/h</span>
                         </div>
                       </div>
                     </div>

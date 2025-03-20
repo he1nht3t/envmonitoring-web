@@ -28,6 +28,10 @@ interface AnalysisResult {
     avg: number;
     status: 'quiet' | 'moderate' | 'loud' | 'very loud';
   };
+  rain: {
+    avg: number;
+    status: 'none' | 'light' | 'moderate' | 'heavy';
+  };
   summary: string;
 }
 
@@ -96,7 +100,7 @@ export default function EnvironmentAnalysis({ sensorData, deviceName }: Environm
           </div>
 
           {/* Detailed Analysis */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Temperature Analysis */}
             <div className="bg-white p-4 rounded-md border border-slate-200">
               <div className="flex justify-between items-center">
@@ -166,6 +170,22 @@ export default function EnvironmentAnalysis({ sensorData, deviceName }: Environm
                 </p>
               </div>
             </div>
+
+            {/* Rain Analysis */}
+            <div className="bg-white p-4 rounded-md border border-slate-200">
+              <div className="flex justify-between items-center">
+                <h3 className="font-medium">Rain Intensity</h3>
+                <RainBadge status={analysis.rain.status} />
+              </div>
+              <div className="mt-2">
+                <p className="text-2xl font-bold">{analysis.rain.avg.toFixed(1)} mm</p>
+                <p className="text-sm text-slate-500 mt-1">
+                  {analysis.rain.status === 'none' ? 'No rain detected' :
+                   analysis.rain.status === 'light' ? 'Light rain' :
+                   analysis.rain.status === 'moderate' ? 'Moderate rain' : 'Heavy rain'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>
@@ -199,6 +219,22 @@ function AirQualityBadge({ status }: { status: 'good' | 'moderate' | 'poor' | 'u
   return (
     <span className={`text-xs px-2 py-1 rounded ${bgColor}`}>
       {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
+  );
+}
+
+function RainBadge({ status }: { status: 'none' | 'light' | 'moderate' | 'heavy' }) {
+  const bgColor = 
+    status === 'none' ? 'bg-slate-100 text-slate-800' :
+    status === 'light' ? 'bg-blue-100 text-blue-800' :
+    status === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
+    'bg-red-100 text-red-800';
+
+  return (
+    <span className={`text-xs px-2 py-1 rounded ${bgColor}`}>
+      {status === 'none' ? 'None' :
+       status === 'light' ? 'Light' :
+       status === 'moderate' ? 'Moderate' : 'Heavy'}
     </span>
   );
 }
@@ -300,28 +336,28 @@ function analyzeEnvironmentData(data: SensorData[]): AnalysisResult {
   let airQualityStatus: 'good' | 'moderate' | 'poor' | 'unhealthy' | 'hazardous' = 'good';
   const pollutants: string[] = [];
 
-  // Check each pollutant and update status
-  if (co2Avg > 1000) {
+  // Check each pollutant and update status with more sensitive thresholds
+  if (co2Avg > 800) {
     pollutants.push('High CO2');
     airQualityStatus = airQualityStatus === 'good' ? 'moderate' : airQualityStatus;
   }
-  if (coAvg > 9) {
+  if (coAvg > 5) {
     pollutants.push('High CO');
     airQualityStatus = 'hazardous';
   }
-  if (nh3Avg > 25) {
+  if (nh3Avg > 15) {
     pollutants.push('High NH3');
     airQualityStatus = airQualityStatus === 'good' ? 'poor' : airQualityStatus;
   }
-  if (lpgAvg > 1000) {
+  if (lpgAvg > 500) {
     pollutants.push('High LPG');
     airQualityStatus = 'unhealthy';
   }
-  if (smokeAvg > 100) {
+  if (smokeAvg > 50) {
     pollutants.push('Smoke detected');
     airQualityStatus = airQualityStatus === 'good' ? 'poor' : airQualityStatus;
   }
-  if (alcoholAvg > 100) {
+  if (alcoholAvg > 50) {
     pollutants.push('High Alcohol vapor');
     airQualityStatus = airQualityStatus === 'good' ? 'moderate' : airQualityStatus;
   }
@@ -334,6 +370,18 @@ function analyzeEnvironmentData(data: SensorData[]): AnalysisResult {
     noiseStatus = 'loud';
   } else if (soundAvg > 60) {
     noiseStatus = 'moderate';
+  }
+
+  // Determine rain intensity status
+  let rainStatus: 'none' | 'light' | 'moderate' | 'heavy' = 'none';
+  const rainAvg = sortedData.reduce((sum, item) => sum + item.rain_intensity, 0) / sortedData.length;
+  
+  if (rainAvg > 7.5) {
+    rainStatus = 'heavy';
+  } else if (rainAvg > 2.5) {
+    rainStatus = 'moderate';
+  } else if (rainAvg > 0.1) {
+    rainStatus = 'light';
   }
 
   // Generate summary
@@ -350,7 +398,14 @@ function analyzeEnvironmentData(data: SensorData[]): AnalysisResult {
   }
   
   // Add noise level info
-  summary += `Noise level is ${noiseStatus} at ${soundAvg.toFixed(1)} dB.`;
+  summary += `Noise level is ${noiseStatus} at ${soundAvg.toFixed(1)} dB. `;
+  
+  // Add rain intensity info
+  if (rainStatus !== 'none') {
+    summary += `Rain intensity is ${rainStatus} at ${rainAvg.toFixed(1)} mm.`;
+  } else {
+    summary += `No rain detected.`;
+  }
 
   return {
     temperature: {
@@ -370,6 +425,10 @@ function analyzeEnvironmentData(data: SensorData[]): AnalysisResult {
     noise: {
       avg: soundAvg,
       status: noiseStatus
+    },
+    rain: {
+      avg: rainAvg,
+      status: rainStatus
     },
     summary
   };
