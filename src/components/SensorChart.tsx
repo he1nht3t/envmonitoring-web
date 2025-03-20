@@ -4,6 +4,7 @@ import { SensorData } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { format } from 'date-fns';
+import { useMemo } from 'react';
 
 interface SensorChartProps {
   data: SensorData[];
@@ -16,27 +17,37 @@ interface SensorChartProps {
   unit: string;
 }
 
-export default function SensorChart({ data, sensorTypes, title, unit }: SensorChartProps) {
-  // Sort data by created_at in ascending order
-  const sortedData = [...data].sort((a, b) => 
-    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-  );
+export default function SensorChart({ data, title, sensorTypes, unit }: SensorChartProps) {
+  // Memoize chart data to prevent unnecessary recalculations
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) return [];
 
-  // Format data for the chart
-  const chartData = sortedData.map(item => {
-    const formattedItem: Record<string, string | number> = {
-      time: format(new Date(item.created_at), 'mm:ss'),
-      fullTime: format(new Date(item.created_at), 'HH:mm:ss'),
-      timestamp: new Date(item.created_at).getTime(),
-    };
-    
-    // Add each sensor type to the formatted item
-    sensorTypes.forEach(sensorType => {
-      formattedItem[sensorType.key] = item[sensorType.key];
-    });
-    
-    return formattedItem;
-  });
+    return data
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .map(item => ({
+        time: format(new Date(item.created_at), 'mm:ss'),
+        fullTime: format(new Date(item.created_at), 'HH:mm:ss'),
+        timestamp: new Date(item.created_at).getTime(),
+        ...sensorTypes.reduce((acc, type) => ({
+          ...acc,
+          [type.key]: item[type.key as keyof SensorData] != null ? Number(item[type.key as keyof SensorData]) : null
+        }), {})
+      }));
+  }, [data, sensorTypes]);
+
+  // Error boundary and loading state handling
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[300px] flex items-center justify-center">
+          <p className="text-muted-foreground">No data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -70,7 +81,8 @@ export default function SensorChart({ data, sensorTypes, title, unit }: SensorCh
               }}
               formatter={(value, name) => {
                 const sensorType = sensorTypes.find(type => type.key === name);
-                return [`${value} ${unit}`, sensorType?.label || name];
+                const formattedValue = value != null ? (value === 0 ? '0' : (Number(value) < 0.01 ? Number(value).toExponential(2) : Number(value).toFixed(2))) : 'N/A';
+                return [`${formattedValue} ${unit}`, sensorType?.label || name];
               }}
             />
             <Legend />

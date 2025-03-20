@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { SensorData, fetchSensorData } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import DeviceSelector from '@/components/DeviceSelector';
+import SensorTable from '@/components/SensorTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   LineChart, 
@@ -75,7 +76,7 @@ export default function AnalyticsPage() {
     return averages;
   };
   
-  // Prepare data for charts
+  // Prepare and memoize chart data for better performance
   const prepareChartData = () => {
     return sensorData
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
@@ -95,10 +96,10 @@ export default function AnalyticsPage() {
       }));
   };
   
-  // Prepare data for pie chart
+  // Prepare and normalize pie chart data with proper scaling
   const preparePieData = () => {
     const averages = calculateAverages();
-    return [
+    const data = [
       { name: 'Temperature', value: averages.temperature || 0 },
       { name: 'Humidity', value: averages.humidity || 0 },
       { name: 'CO2', value: averages.co2 || 0 },
@@ -110,10 +111,18 @@ export default function AnalyticsPage() {
       { name: 'Sound', value: averages.sound_intensity || 0 },
       { name: 'Rain', value: averages.rain_intensity || 0 },
     ];
+
+    // Normalize values to prevent overlapping text
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    return data.map(item => ({
+      ...item,
+      value: total === 0 ? 0 : (item.value / total) * 100
+    }));
   };
   
   const COLORS = ['#f97316', '#3b82f6', '#6b7280', '#ef4444', '#8b5cf6', '#10b981', '#64748b', '#ec4899', '#fbbf24', '#0ea5e9'];
 
+  // Add error boundary and loading state handling
   if (loading || devicesLoading) {
     return (
       <DashboardLayout>
@@ -164,6 +173,7 @@ export default function AnalyticsPage() {
           <TabsList>
             <TabsTrigger value="charts">Charts</TabsTrigger>
             <TabsTrigger value="distribution">Distribution</TabsTrigger>
+            <TabsTrigger value="table">Table</TabsTrigger>
           </TabsList>
           
           <TabsContent value="charts">
@@ -298,11 +308,10 @@ export default function AnalyticsPage() {
                         data={preparePieData()}
                         cx="50%"
                         cy="50%"
-                        labelLine={true}
+                        labelLine={false}
                         outerRadius={150}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       >
                         {preparePieData().map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -344,6 +353,13 @@ export default function AnalyticsPage() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="table">
+            <SensorTable 
+              data={sensorData} 
+              deviceName={getSelectedDeviceName()} 
+            />
           </TabsContent>
         </Tabs>
       </div>

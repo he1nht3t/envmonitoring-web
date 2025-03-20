@@ -39,20 +39,31 @@ const createColoredMarker = (temperature: number) => {
 };
 
 // Component to fit map to markers
-function FitBoundsToMarkers({ devices }: { devices: Device[] }) {
+function FitBoundsToMarkers({ devices, focusSelectedDevice, selectedDeviceId }: { devices: Device[], focusSelectedDevice?: boolean, selectedDeviceId?: string }) {
   const map = useMap();
   
   useEffect(() => {
     if (devices.length > 0) {
       try {
-        // Create bounds from device coordinates
+        // If focusing on selected device and we have a selected device ID
+        if (focusSelectedDevice && selectedDeviceId) {
+          const selectedDevice = devices.find(device => device.id === selectedDeviceId);
+          
+          if (selectedDevice) {
+            // Center map on selected device with higher zoom level
+            map.setView([selectedDevice.lat, selectedDevice.long], 15);
+            return;
+          }
+        }
+        
+        // Otherwise fit bounds to all devices
         const bounds = devices.map(device => [device.lat, device.long]);
         map.fitBounds(bounds as [number, number][]);
       } catch (error) {
         console.error('Error fitting bounds:', error);
       }
     }
-  }, [devices, map]);
+  }, [devices, map, focusSelectedDevice, selectedDeviceId]);
   
   return null;
 }
@@ -60,9 +71,11 @@ function FitBoundsToMarkers({ devices }: { devices: Device[] }) {
 interface MapProps {
   devices: Device[];
   sensorData: Record<string, SensorData>;
+  focusSelectedDevice?: boolean;
+  selectedDeviceId?: string;
 }
 
-const Map = ({ devices, sensorData }: MapProps) => {
+const Map = ({ devices, sensorData, focusSelectedDevice = false, selectedDeviceId }: MapProps) => {
   // Find center of all devices or default to a location
   const getMapCenter = () => {
     if (devices.length === 0) return [0, 0];
@@ -90,7 +103,7 @@ const Map = ({ devices, sensorData }: MapProps) => {
       />
       
       {/* Fit map to markers */}
-      {devices.length > 0 && <FitBoundsToMarkers devices={devices} />}
+      {devices.length > 0 && <FitBoundsToMarkers devices={devices} focusSelectedDevice={focusSelectedDevice} selectedDeviceId={selectedDeviceId} />}
       
       {devices.map(device => {
         // Get the device's sensor data if available
@@ -107,22 +120,58 @@ const Map = ({ devices, sensorData }: MapProps) => {
             icon={icon}
           >
             <Popup>
-              <div className="p-1">
+              <div className="p-2 min-w-[280px]">
                 <h3 className="font-bold text-lg">{device.name}</h3>
                 {deviceData ? (
-                  <div className="text-sm mt-2 space-y-1">
-                    <p className="flex justify-between">
-                      <span>Temperature:</span> 
-                      <span className="font-medium">{deviceData.temperature.toFixed(1)}°C</span>
-                    </p>
-                    <p className="flex justify-between">
-                      <span>Humidity:</span> 
-                      <span className="font-medium">{deviceData.humidity.toFixed(1)}%</span>
-                    </p>
-                    <p className="flex justify-between">
-                      <span>CO2:</span> 
-                      <span className="font-medium">{deviceData.co2.toFixed(1)} ppm</span>
-                    </p>
+                  <div className="text-sm mt-2">
+                    <div className="flex flex-col space-y-1">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">Temperature:</span> 
+                          <span className="font-medium ml-2">{deviceData.temperature.toFixed(1)}°C</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">Humidity:</span> 
+                          <span className="font-medium ml-2">{deviceData.humidity.toFixed(1)}%</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">CO2:</span> 
+                          <span className="font-medium ml-2">{deviceData.co2.toFixed(1)} ppm</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">CO:</span> 
+                          <span className="font-medium ml-2">{deviceData.co.toFixed(1)} ppm</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">Sound:</span> 
+                          <span className="font-medium ml-2">{deviceData.sound_intensity.toFixed(1)} dB</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">NH3:</span> 
+                          <span className="font-medium ml-2">{deviceData.nh3.toFixed(1)} ppm</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">LPG:</span> 
+                          <span className="font-medium ml-2">{deviceData.lpg.toFixed(1)} ppm</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">Smoke:</span> 
+                          <span className="font-medium ml-2">{deviceData.smoke.toFixed(1)} ppm</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex justify-between items-center border-b pb-1">
+                          <span className="text-gray-600">Alcohol:</span> 
+                          <span className="font-medium ml-2">{deviceData.alcohol.toFixed(1)} ppm</span>
+                        </div>
+                      </div>
+                    </div>
                     <p className="text-xs text-gray-500 mt-2">
                       Last Updated: {new Date(deviceData.created_at).toLocaleString()}
                     </p>

@@ -15,9 +15,13 @@ function Calendar({
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
 
+  type IconProps = React.ComponentProps<"svg"> & { className?: string };
+  const IconLeft = (props: IconProps) => <ChevronLeft className="h-4 w-4" {...props} />;
+  const IconRight = (props: IconProps) => <ChevronRight className="h-4 w-4" {...props} />;
+
   const customComponents = {
-    IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" {...props} />,
-    IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" {...props} />,
+    IconLeft,
+    IconRight
   };
   return (
     <DayPicker
@@ -54,7 +58,7 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
-      // @ts-ignore: Ignore type error for IconLeft and IconRight
+
       components={customComponents as any}
       {...props}
     />

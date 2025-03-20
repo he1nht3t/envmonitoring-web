@@ -8,7 +8,8 @@ import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Download } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CalendarIcon, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { DateRange } from 'react-day-picker';
 
@@ -22,6 +23,8 @@ export default function SensorTable({ data, deviceName }: SensorTableProps) {
     from: undefined,
     to: undefined,
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Filter data by date range
   const filteredData = data.filter(reading => {
@@ -47,6 +50,21 @@ export default function SensorTable({ data, deviceName }: SensorTableProps) {
   const sortedData = [...filteredData].sort((a, b) => 
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
+  
+  // Calculate pagination values
+  const totalItems = sortedData.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const currentPageData = sortedData.slice(startIndex, endIndex);
+  
+  // Handle page changes
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+  
+  const goToPreviousPage = () => goToPage(currentPage - 1);
+  const goToNextPage = () => goToPage(currentPage + 1);
 
   // Function to download data as CSV
   const downloadCSV = () => {
@@ -160,7 +178,7 @@ export default function SensorTable({ data, deviceName }: SensorTableProps) {
           </TableHeader>
           <TableBody>
             {sortedData.length > 0 ? (
-              sortedData.slice(0, 10).map((reading) => (
+              currentPageData.map((reading) => (
                 <TableRow key={reading.id}>
                   <TableCell>{format(new Date(reading.created_at), 'yyyy-MM-dd HH:mm:ss')}</TableCell>
                   <TableCell>{reading.temperature.toFixed(1)}</TableCell>
@@ -184,6 +202,61 @@ export default function SensorTable({ data, deviceName }: SensorTableProps) {
             )}
           </TableBody>
         </Table>
+        {/* Pagination controls */}
+        {sortedData.length > 0 && (
+          <div className="flex items-center justify-between mt-4 px-2">
+            <div className="flex items-center space-x-2">
+              <p className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {endIndex} of {totalItems} entries
+              </p>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(Number(value));
+                  setCurrentPage(1); // Reset to first page when changing page size
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={pageSize.toString()} />
+                </SelectTrigger>
+                <SelectContent>
+                  {[5, 10, 20, 50, 100].map((size) => (
+                    <SelectItem key={size} value={size.toString()}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">per page</p>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center">
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

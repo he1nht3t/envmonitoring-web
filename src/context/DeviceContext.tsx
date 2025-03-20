@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { Device, fetchDevices } from '@/lib/supabase';
 
 interface DeviceContextType {
@@ -16,28 +16,40 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   // Load devices on mount
   useEffect(() => {
+    let isMounted = true;
+
     async function loadDevices() {
       try {
         setLoading(true);
+        setError(null);
         const devicesData = await fetchDevices();
-        setDevices(devicesData);
-        
-        // Set the first device as selected by default if available and no device is selected
-        if (devicesData.length > 0 && !selectedDeviceId) {
-          setSelectedDeviceId(devicesData[0].id);
+        if (isMounted) {
+          setDevices(devicesData);
+          
+          // Set the first device as selected by default if available and no device is selected
+          if (devicesData.length > 0 && !selectedDeviceId) {
+            setSelectedDeviceId(devicesData[0].id);
+          }
         }
       } catch (error) {
-        console.error('Error loading devices:', error);
+        if (isMounted) {
+          console.error('Error loading devices:', error);
+          setError(error instanceof Error ? error : new Error('Failed to load devices'));
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
     
     loadDevices();
-  }, [selectedDeviceId]);
+    return () => { isMounted = false; };
+  }, []); // Remove selectedDeviceId from dependency array
 
   // Save selected device to localStorage when it changes
   useEffect(() => {
@@ -52,10 +64,20 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
     if (savedDeviceId) {
       setSelectedDeviceId(savedDeviceId);
     }
-  }, [selectedDeviceId]);
+  }, []); // Run only on mount
+
+  // Memoize context value to prevent unnecessary rerenders
+  const contextValue = useMemo(
+    () => ({ devices, selectedDeviceId, setSelectedDeviceId, loading }),
+    [devices, selectedDeviceId, loading]
+  );
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
-    <DeviceContext.Provider value={{ devices, selectedDeviceId, setSelectedDeviceId, loading }}>
+    <DeviceContext.Provider value={contextValue}>
       {children}
     </DeviceContext.Provider>
   );
