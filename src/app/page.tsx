@@ -150,7 +150,7 @@ export default function Home() {
           </div>
           
           {/* Overview stats for selected device */}
-          {selectedDeviceId && latestSensorData[selectedDeviceId] && (
+          {selectedDeviceId && latestSensorData[selectedDeviceId] && hasRecentData && (
             <div className="space-y-4">
               <Card>
                 <CardHeader>
