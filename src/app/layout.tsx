@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { DeviceProvider } from "@/context/DeviceContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { DateProvider } from "@/context/DateContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -34,9 +37,15 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/favicon.svg" />
       </head>
       <body className={inter.className}>
-        <DeviceProvider>
-          {children}
-        </DeviceProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <DeviceProvider>
+              <DateProvider>
+                {children}
+              </DateProvider>
+            </DeviceProvider>
+          </AuthProvider>
+        </ThemeProvider>
         <SpeedInsights />
         <Analytics />
       </body>

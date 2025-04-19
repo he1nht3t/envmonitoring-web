@@ -30,7 +30,7 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
         if (isMounted) {
           setDevices(devicesData);
           
-          // Set the first device as selected by default if available and no device is selected
+          // Auto-select the first device if none is selected
           if (devicesData.length > 0 && !selectedDeviceId) {
             setSelectedDeviceId(devicesData[0].id);
           }
@@ -49,7 +49,8 @@ export function DeviceProvider({ children }: { children: ReactNode }) {
     
     loadDevices();
     return () => { isMounted = false; };
-  }, []); // Remove selectedDeviceId from dependency array
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount - selectedDeviceId is intentionally omitted to prevent refetching
 
   // Save selected device to localStorage when it changes
   useEffect(() => {
