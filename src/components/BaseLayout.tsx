@@ -4,18 +4,16 @@ import { ReactNode } from 'react';
 import NavBar from './NavBar';
 import Link from 'next/link';
 
-interface DashboardLayoutProps {
+interface BaseLayoutProps {
   children: ReactNode;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function BaseLayout({ children }: BaseLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
       <NavBar />
-      <main className="flex-1 py-6">
-        <div className="container mx-auto px-4">
-          {children}
-        </div>
+      <main className="flex-1">
+        {children}
       </main>
       <footer className="border-t py-6">
         <div className="container mx-auto px-4 flex flex-col items-center justify-center gap-4 md:flex-row md:justify-center">
@@ -26,4 +24,4 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </footer>
     </div>
   );
-}
+} 

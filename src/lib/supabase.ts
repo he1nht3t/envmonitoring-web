@@ -45,14 +45,29 @@ export async function fetchDevices() {
   return data as Device[];
 }
 
-// Function to fetch sensor data for a specific device
-export async function fetchSensorData(deviceId: string, limit = 100) {
-  const { data, error } = await supabase
+// Fetch sensor data for a specific device with optional date filter
+export async function fetchSensorData(deviceId: string, limit = 100, date?: Date) {
+  let query = supabase
     .from('sensor_data')
     .select('*')
     .eq('device_id', deviceId)
     .order('created_at', { ascending: false })
     .limit(limit);
+  
+  // If date is provided, filter data for that specific day
+  if (date) {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    query = query
+      .gte('created_at', startOfDay.toISOString())
+      .lte('created_at', endOfDay.toISOString());
+  }
+  
+  const { data, error } = await query;
   
   if (error) {
     console.error('Error fetching sensor data:', error);
@@ -62,12 +77,27 @@ export async function fetchSensorData(deviceId: string, limit = 100) {
   return data as SensorData[];
 }
 
-// Function to fetch the latest sensor data for all devices
-export async function fetchLatestSensorData() {
-  const { data, error } = await supabase
+// Fetch latest sensor data for all devices with optional date filter
+export async function fetchLatestSensorData(date?: Date) {
+  let query = supabase
     .from('sensor_data')
     .select('*')
     .order('created_at', { ascending: false });
+  
+  // If date is provided, filter data for that specific day
+  if (date) {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    query = query
+      .gte('created_at', startOfDay.toISOString())
+      .lte('created_at', endOfDay.toISOString());
+  }
+  
+  const { data, error } = await query;
   
   if (error) {
     console.error('Error fetching latest sensor data:', error);

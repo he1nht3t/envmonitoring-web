@@ -94,15 +94,15 @@ export default function EnvironmentAnalysis({ sensorData, deviceName }: Environm
       <CardContent>
         <div className="space-y-6">
           {/* Summary Section */}
-          <div className="bg-slate-50 p-4 rounded-md border border-slate-200">
+          <div className="rounded-lg border bg-card p-4 shadow-sm">
             <h3 className="font-medium text-lg mb-2">Summary</h3>
-            <p>{analysis.summary}</p>
+            <p className="text-card-foreground">{analysis.summary}</p>
           </div>
 
           {/* Detailed Analysis */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Temperature Analysis */}
-            <div className="bg-white p-4 rounded-md border border-slate-200">
+            <div className="rounded-lg border bg-card p-4 shadow-sm">
               <div className="flex justify-between items-center">
                 <h3 className="font-medium">Temperature</h3>
                 <StatusBadge status={analysis.temperature.status} />
@@ -111,7 +111,7 @@ export default function EnvironmentAnalysis({ sensorData, deviceName }: Environm
                 <p className="text-2xl font-bold">{analysis.temperature.avg.toFixed(1)}°C</p>
                 <div className="flex items-center mt-1">
                   <TrendIndicator trend={analysis.temperature.trend} />
-                  <span className="text-sm ml-1">
+                  <span className="text-sm ml-1 text-muted-foreground">
                     {analysis.temperature.trend === 'rising' ? 'Rising' : 
                      analysis.temperature.trend === 'falling' ? 'Falling' : 'Stable'}
                   </span>
@@ -120,7 +120,7 @@ export default function EnvironmentAnalysis({ sensorData, deviceName }: Environm
             </div>
 
             {/* Humidity Analysis */}
-            <div className="bg-white p-4 rounded-md border border-slate-200">
+            <div className="rounded-lg border bg-card p-4 shadow-sm">
               <div className="flex justify-between items-center">
                 <h3 className="font-medium">Humidity</h3>
                 <StatusBadge status={analysis.humidity.status} />
@@ -129,7 +129,7 @@ export default function EnvironmentAnalysis({ sensorData, deviceName }: Environm
                 <p className="text-2xl font-bold">{analysis.humidity.avg.toFixed(1)}%</p>
                 <div className="flex items-center mt-1">
                   <TrendIndicator trend={analysis.humidity.trend} />
-                  <span className="text-sm ml-1">
+                  <span className="text-sm ml-1 text-muted-foreground">
                     {analysis.humidity.trend === 'rising' ? 'Rising' : 
                      analysis.humidity.trend === 'falling' ? 'Falling' : 'Stable'}
                   </span>
@@ -138,16 +138,16 @@ export default function EnvironmentAnalysis({ sensorData, deviceName }: Environm
             </div>
 
             {/* Air Quality Analysis */}
-            <div className="bg-white p-4 rounded-md border border-slate-200">
+            <div className="rounded-lg border bg-card p-4 shadow-sm">
               <div className="flex justify-between items-center">
                 <h3 className="font-medium">Air Quality</h3>
                 <AirQualityBadge status={analysis.airQuality.status} />
               </div>
               <div className="mt-2">
-                <p className="text-sm">Main pollutants:</p>
+                <p className="text-sm text-muted-foreground">Main pollutants:</p>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {analysis.airQuality.pollutants.map((pollutant, index) => (
-                    <span key={index} className="bg-slate-100 text-slate-800 text-xs px-2 py-1 rounded">
+                    <span key={index} className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium ring-1 ring-inset ring-border">
                       {pollutant}
                     </span>
                   ))}
@@ -156,14 +156,14 @@ export default function EnvironmentAnalysis({ sensorData, deviceName }: Environm
             </div>
 
             {/* Noise Analysis */}
-            <div className="bg-white p-4 rounded-md border border-slate-200">
+            <div className="rounded-lg border bg-card p-4 shadow-sm">
               <div className="flex justify-between items-center">
                 <h3 className="font-medium">Noise Level</h3>
                 <NoiseBadge status={analysis.noise.status} />
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold">{analysis.noise.avg.toFixed(1)} dB</p>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {analysis.noise.status === 'quiet' ? 'Quiet environment' :
                    analysis.noise.status === 'moderate' ? 'Moderate noise level' :
                    analysis.noise.status === 'loud' ? 'Loud environment' : 'Very loud environment'}
@@ -172,14 +172,14 @@ export default function EnvironmentAnalysis({ sensorData, deviceName }: Environm
             </div>
 
             {/* Rain Analysis */}
-            <div className="bg-white p-4 rounded-md border border-slate-200">
+            <div className="rounded-lg border bg-card p-4 shadow-sm">
               <div className="flex justify-between items-center">
                 <h3 className="font-medium">Rain Intensity</h3>
                 <RainBadge status={analysis.rain.status} />
               </div>
               <div className="mt-2">
                 <p className="text-2xl font-bold">{analysis.rain.avg.toFixed(1)} mm</p>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {analysis.rain.status === 'none' ? 'No rain detected' :
                    analysis.rain.status === 'light' ? 'Light rain' :
                    analysis.rain.status === 'moderate' ? 'Moderate rain' : 'Heavy rain'}
@@ -195,13 +195,14 @@ export default function EnvironmentAnalysis({ sensorData, deviceName }: Environm
 
 // Helper components
 function StatusBadge({ status }: { status: 'normal' | 'warning' | 'critical' }) {
-  const bgColor = 
-    status === 'normal' ? 'bg-green-100 text-green-800' :
-    status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-    'bg-red-100 text-red-800';
+  const getClasses = () => {
+    if (status === 'normal') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300';
+    if (status === 'warning') return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300';
+    return 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300';
+  };
 
   return (
-    <span className={`text-xs px-2 py-1 rounded ${bgColor}`}>
+    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${getClasses()}`}>
       {status === 'normal' ? 'Normal' :
        status === 'warning' ? 'Warning' : 'Critical'}
     </span>
@@ -209,29 +210,31 @@ function StatusBadge({ status }: { status: 'normal' | 'warning' | 'critical' }) 
 }
 
 function AirQualityBadge({ status }: { status: 'good' | 'moderate' | 'poor' | 'unhealthy' | 'hazardous' }) {
-  const bgColor = 
-    status === 'good' ? 'bg-green-100 text-green-800' :
-    status === 'moderate' ? 'bg-blue-100 text-blue-800' :
-    status === 'poor' ? 'bg-yellow-100 text-yellow-800' :
-    status === 'unhealthy' ? 'bg-orange-100 text-orange-800' :
-    'bg-red-100 text-red-800';
+  const getClasses = () => {
+    if (status === 'good') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300';
+    if (status === 'moderate') return 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300';
+    if (status === 'poor') return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300';
+    if (status === 'unhealthy') return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+    return 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300';
+  };
 
   return (
-    <span className={`text-xs px-2 py-1 rounded ${bgColor}`}>
+    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${getClasses()}`}>
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   );
 }
 
 function RainBadge({ status }: { status: 'none' | 'light' | 'moderate' | 'heavy' }) {
-  const bgColor = 
-    status === 'none' ? 'bg-slate-100 text-slate-800' :
-    status === 'light' ? 'bg-blue-100 text-blue-800' :
-    status === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
-    'bg-red-100 text-red-800';
+  const getClasses = () => {
+    if (status === 'none') return 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
+    if (status === 'light') return 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300';
+    if (status === 'moderate') return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300';
+    return 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300';
+  };
 
   return (
-    <span className={`text-xs px-2 py-1 rounded ${bgColor}`}>
+    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${getClasses()}`}>
       {status === 'none' ? 'None' :
        status === 'light' ? 'Light' :
        status === 'moderate' ? 'Moderate' : 'Heavy'}
@@ -240,14 +243,15 @@ function RainBadge({ status }: { status: 'none' | 'light' | 'moderate' | 'heavy'
 }
 
 function NoiseBadge({ status }: { status: 'quiet' | 'moderate' | 'loud' | 'very loud' }) {
-  const bgColor = 
-    status === 'quiet' ? 'bg-green-100 text-green-800' :
-    status === 'moderate' ? 'bg-blue-100 text-blue-800' :
-    status === 'loud' ? 'bg-yellow-100 text-yellow-800' :
-    'bg-red-100 text-red-800';
+  const getClasses = () => {
+    if (status === 'quiet') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300';
+    if (status === 'moderate') return 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300';
+    if (status === 'loud') return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300';
+    return 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300';
+  };
 
   return (
-    <span className={`text-xs px-2 py-1 rounded ${bgColor}`}>
+    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${getClasses()}`}>
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   );
