@@ -46,14 +46,13 @@ export default function SignupPage() {
         return;
       }
 
-      // If auto-confirm is disabled (email confirmation required)
-      if (data.user && data.user.identities && data.user.identities.length === 0) {
-        router.push('/signup-success');
-      } else {
-        // If auto-confirm is enabled, the user is signed in automatically
-        router.push('/analytics');
-        router.refresh();
-      }
+      // Supabase has changed how it indicates email confirmation
+      // Always redirect to signup-success when there's no error
+      // The user will see instructions to check their email
+      router.push('/signup-success');
+      
+      // Log the signup response for debugging
+      console.log('Signup response:', data);
     } catch (err) {
       setError('An unexpected error occurred');
       console.error(err);
@@ -119,7 +118,7 @@ export default function SignupPage() {
                 />
               </div>
             </CardContent>
-            <CardFooter className="flex flex-col gap-4">
+            <CardFooter className="flex flex-col gap-4 mt-4">
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Creating account...' : 'Sign Up'}
               </Button>

@@ -1,9 +1,10 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, getUserRole, checkUserRolesTable } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { useRouter, usePathname } from 'next/navigation';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +12,8 @@ interface AuthContextType {
   isLoading: boolean;
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  userRole: string;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (password: string) => Promise<{ error: Error | null }>;
 }
@@ -21,8 +24,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string>('user');
+  const [roleError, setRoleError] = useState<boolean>(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
+
+  // Check if the user_roles table exists on mount
+  useEffect(() => {
+    async function checkDatabase() {
+      const tableExists = await checkUserRolesTable();
+      if (!tableExists) {
+        setRoleError(true);
+        toast({
+          title: "Database Configuration Issue",
+          description: "Unable to access user roles. Default permissions will be applied.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
+    }
+    
+    checkDatabase();
+  }, [toast]);
+
+  // Fetch user role when user changes
+  useEffect(() => {
+    async function fetchUserRole() {
+      if (user) {
+        try {
+          const role = await getUserRole(user.id);
+          setUserRole(role);
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+          setUserRole('user');
+          
+          // Show toast notification for role error
+          if (!roleError) {
+            toast({
+              title: "Role Assignment Issue",
+              description: "Could not determine your role. Default user permissions applied.",
+              variant: "destructive",
+              duration: 5000,
+            });
+            setRoleError(true);
+          }
+        }
+      } else {
+        setUserRole('user');
+      }
+    }
+    
+    fetchUserRole();
+  }, [user, roleError, toast]);
 
   useEffect(() => {
     // Get session on mount
@@ -59,9 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Redirect if accessing protected route and not authenticated
   useEffect(() => {
     if (!isLoading) {
-      // Check if the current path is /analytics and user is not authenticated
-      if (pathname === '/analytics' && !session) {
-        router.push('/login');
+      // Check if the current path is protected and user is not authenticated
+      const protectedRoutes = ['/analytics', '/devices'];
+      if (protectedRoutes.some(route => pathname === route || pathname.startsWith(route + '/')) && !session) {
+        // Include the current path as a redirect parameter
+        router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
       }
     }
   }, [pathname, session, isLoading, router]);
@@ -91,6 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     signOut,
     isAuthenticated: !!session,
+    isAdmin: userRole === 'admin',
+    userRole,
     resetPassword,
     updatePassword,
   };

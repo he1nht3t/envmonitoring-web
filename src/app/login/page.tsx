@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import BaseLayout from '@/components/BaseLayout';
@@ -15,6 +15,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get the redirect path from URL or default to /analytics
+  const redirectPath = searchParams?.get('redirect') || '/analytics';
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,7 +36,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push('/analytics');
+      router.push(redirectPath);
       router.refresh();
     } catch (err) {
       setError('An unexpected error occurred');
@@ -49,7 +53,7 @@ export default function LoginPage() {
           <CardHeader>
             <CardTitle className="text-2xl">Login</CardTitle>
             <CardDescription>
-              Enter your credentials to access the analytics dashboard
+              Enter your credentials to access the dashboard
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
