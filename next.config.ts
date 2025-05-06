@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  distDir: '.next',
 };
 
 export default nextConfig;
