@@ -1,23 +1,33 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { cn } from '@/lib/utils';
-import { Menu, LogOut } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import Image from 'next/image';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
+import { Menu, LogOut } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import Image from "next/image";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function NavBar() {
   const pathname = usePathname();
   const { isAuthenticated, signOut } = useAuth();
+  const { theme } = useTheme();
   
+  const logoSrc = theme === "dark" ? "/envato-dark.svg" : "/envato.svg";
+
   const navLinks = [
-    { href: '/', label: 'Dashboard' },
-    { href: '/analytics', label: 'Analytics' },
-    { href: '/devices', label: 'Devices' },
+    { href: "/", label: "Dashboard" },
+    { href: "/analytics", label: "Analytics" },
+    { href: "/devices", label: "Devices" },
   ];
 
   return (
@@ -26,33 +36,33 @@ export default function NavBar() {
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/env-monitor.svg"
-              alt="Environmental Monitoring Logo"
-              width={36}
-              height={36}
-              className="h-12 w-12"
+              src={logoSrc}
+              alt="Logo"
+              width={120}
+              height={120}
+              className="h-24 w-24 -my-6"
+              priority
             />
-            <span className="font-bold md:inline hidden">Environmental Monitoring</span>
           </Link>
         </div>
-        
+
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-4">
           {navLinks.map((link) => {
-            const isActive = 
-              link.href === '/' 
-                ? pathname === '/' 
+            const isActive =
+              link.href === "/"
+                ? pathname === "/"
                 : pathname.startsWith(link.href);
-            
+
             return (
-              <Link 
+              <Link
                 key={link.href}
-                href={link.href} 
+                href={link.href}
                 className={cn(
                   "text-sm font-medium transition-colors relative",
-                  isActive 
-                    ? "text-primary font-semibold" 
-                    : "text-muted-foreground hover:text-foreground"
+                  isActive
+                    ? "text-primary font-semibold"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {link.label}
@@ -62,10 +72,10 @@ export default function NavBar() {
               </Link>
             );
           })}
-          
+
           <div className="flex items-center gap-3 ml-2">
             <ThemeToggle />
-            
+
             {isAuthenticated && (
               <Button
                 onClick={signOut}
@@ -79,7 +89,7 @@ export default function NavBar() {
             )}
           </div>
         </nav>
-        
+
         {/* Mobile Navigation */}
         <div className="md:hidden flex items-center gap-3">
           <ThemeToggle />
@@ -92,39 +102,39 @@ export default function NavBar() {
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-6 py-6">
-                <Link href="/" className="flex items-center gap-2">
+                <Link href="/" className="flex items-center justify-center">
                   <Image
-                    src="/env-monitor.svg"
-                    alt="Environmental Monitoring Logo"
-                    width={36}
-                    height={36}
-                    className="h-12 w-12"
+                    src={logoSrc}
+                    alt="Logo"
+                    width={150}
+                    height={150}
+                    className="h-28 w-28"
+                    priority
                   />
-                  <span className="font-bold">Environmental Monitoring</span>
                 </Link>
                 <nav className="flex flex-col gap-4">
                   {navLinks.map((link) => {
-                    const isActive = 
-                      link.href === '/' 
-                        ? pathname === '/' 
+                    const isActive =
+                      link.href === "/"
+                        ? pathname === "/"
                         : pathname.startsWith(link.href);
-                    
+
                     return (
-                      <Link 
+                      <Link
                         key={link.href}
-                        href={link.href} 
+                        href={link.href}
                         className={cn(
                           "text-sm font-medium transition-colors py-2 px-1 border-l-2",
-                          isActive 
-                            ? "text-primary font-semibold border-primary" 
-                            : "text-muted-foreground hover:text-foreground border-transparent"
+                          isActive
+                            ? "text-primary font-semibold border-primary"
+                            : "text-muted-foreground hover:text-foreground border-transparent",
                         )}
                       >
                         {link.label}
                       </Link>
                     );
                   })}
-                  
+
                   {isAuthenticated && (
                     <button
                       onClick={signOut}
@@ -142,4 +152,4 @@ export default function NavBar() {
       </div>
     </header>
   );
-} 
+}
