@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase, getUserRole, checkUserRolesTable } from '@/lib/supabase';
+import { supabase, getUserRole, checkProfilesTable } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { useRouter, usePathname } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
@@ -30,11 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { toast } = useToast();
 
-  // Check if the user_roles table exists on mount
-  useEffect(() => {
-    async function checkDatabase() {
-      const tableExists = await checkUserRolesTable();
-      if (!tableExists) {
+  // Check if the profiles table exists on mount
+    useEffect(() => {
+      const checkTable = async () => {
+        const tableExists = await checkProfilesTable();
+        if (!tableExists) {
         setRoleError(true);
         toast({
           title: "Database Configuration Issue",
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
     
-    checkDatabase();
+    checkTable();
   }, [toast]);
 
   // Fetch user role when user changes

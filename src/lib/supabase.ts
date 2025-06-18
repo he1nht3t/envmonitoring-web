@@ -127,34 +127,27 @@ export function subscribeToSensorData(callback: (payload: { new: SensorData }) =
     .subscribe();
 }
 
-// Remove the initializeDatabase function since we can't create tables directly
-// and replace with a function to check if user_roles table exists
-export async function checkUserRolesTable(): Promise<boolean> {
+// Check if profiles table exists and is accessible
+export async function checkProfilesTable(): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('user_roles')
+      .from('profiles')
       .select('*')
       .limit(1);
     
     if (error) {
-      console.error('Error checking user_roles table:', error);
-      
-      // Handle the specific case of recursive policy error
-      if (error.code === '42P17' && error.message?.includes('infinite recursion detected in policy')) {
-        console.error('Policy recursion error detected. Please update your RLS policies using the script in scripts/setup-database.sql');
-      }
-      
+      console.error('Error checking profiles table:', error);
       return false;
     }
     
     return true;
   } catch (error) {
-    console.error('Error checking user_roles table:', error);
+    console.error('Error checking profiles table:', error);
     return false;
   }
 }
 
-// Get user role from user_roles table
+// Get user role from profiles table
 export async function getUserRole(userId: string): Promise<string> {
   if (!userId) {
     console.warn('No user ID provided to getUserRole');
@@ -163,17 +156,17 @@ export async function getUserRole(userId: string): Promise<string> {
   
   try {
     // Check if the table exists first
-    const tableExists = await checkUserRolesTable();
+    const tableExists = await checkProfilesTable();
     if (!tableExists) {
-      console.warn('user_roles table does not exist or is not accessible');
+      console.warn('profiles table does not exist or is not accessible');
       return 'user'; // Default role when table doesn't exist
     }
     
-    // Now try to get the user's role
+    // Now try to get the user's role from profiles table
     const { data, error } = await supabase
-      .from('user_roles')
+      .from('profiles')
       .select('role')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .single();
     
     if (error) {
