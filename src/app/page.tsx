@@ -10,6 +10,8 @@ import DeviceSelector from '@/components/DeviceSelector';
 import DateSelector from '@/components/DateSelector';
 import { SensorData, fetchLatestSensorData, fetchSensorData, subscribeToSensorData } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { SensorGridSkeleton, ChartSkeleton, MapSkeleton } from '@/components/ui/skeleton';
+import { LoadingOverlay } from '@/components/ui/spinner';
 import { useDeviceContext } from '@/context/DeviceContext';
 import { useDateContext } from '@/context/DateContext';
 import { format, isSameDay } from 'date-fns';
@@ -125,11 +127,29 @@ export default function Home() {
     );
   };
 
-  if (loading || devicesLoading) {
+  if (devicesLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-[80vh]">
-          <p className="text-xl">Loading dashboard data...</p>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="h-9 w-80 bg-gray-200 rounded animate-pulse" />
+            <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <MapSkeleton className="h-96" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="h-10 bg-gray-200 rounded animate-pulse" />
+              <div className="h-10 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <SensorGridSkeleton />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ChartSkeleton />
+              <ChartSkeleton />
+              <ChartSkeleton />
+              <ChartSkeleton />
+              <ChartSkeleton />
+            </div>
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -154,7 +174,9 @@ export default function Home() {
         </div>
         
         {/* Map showing all devices with focus on selected device */}
-        <DeviceMap devices={devices} sensorData={latestSensorData} focusSelectedDevice={true} />
+        <LoadingOverlay isLoading={loading}>
+          <DeviceMap devices={devices} sensorData={latestSensorData} focusSelectedDevice={true} />
+        </LoadingOverlay>
         
         {/* Device selector and current readings */}
         <div className="space-y-4">
@@ -181,7 +203,9 @@ export default function Home() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {latestSensorData[selectedDeviceId] ? (
+                  {loading ? (
+                    <SensorGridSkeleton count={5} />
+                  ) : latestSensorData[selectedDeviceId] ? (
                     <SensorGrid sensorData={latestSensorData[selectedDeviceId]} />
                   ) : (
                     <div className="text-center py-4 text-muted-foreground">
@@ -210,62 +234,80 @@ export default function Home() {
           </div>
         )}
         
-        {deviceSensorData.length > 0 && (
+        {loading && deviceSensorData.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ChartSkeleton />
+            <ChartSkeleton />
+            <ChartSkeleton />
+            <ChartSkeleton />
+            <ChartSkeleton />
+          </div>
+        ) : deviceSensorData.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Temperature & Humidity Chart */}
-            <SensorChart 
-              data={isToday && hasRecentData ? recentData : deviceSensorData} 
-              title={`Temperature & Humidity ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
-              sensorTypes={[
-                { key: 'temperature', color: '#f97316', label: 'Temperature', unit: '°C' },
-                { key: 'humidity', color: '#3b82f6', label: 'Humidity', unit: '%' }
-              ]}
-              Ylabel="°C / %" 
-            />
+            <LoadingOverlay isLoading={loading}>
+              <SensorChart 
+                data={isToday && hasRecentData ? recentData : deviceSensorData} 
+                title={`Temperature & Humidity ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
+                sensorTypes={[
+                  { key: 'temperature', color: '#f97316', label: 'Temperature', unit: '°C' },
+                  { key: 'humidity', color: '#3b82f6', label: 'Humidity', unit: '%' }
+                ]}
+                Ylabel="°C / %" 
+              />
+            </LoadingOverlay>
             
             {/* CO & CO2 Chart */}
-            <SensorChart 
-              data={isToday && hasRecentData ? recentData : deviceSensorData} 
-              title={`CO & CO2 ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
-              sensorTypes={[
-                { key: 'co', color: '#ef4444', label: 'CO', unit: 'ppm' },
-                { key: 'co2', color: '#6b7280', label: 'CO2', unit: 'ppm' }
-              ]}
-              Ylabel="ppm" 
-            />
+            <LoadingOverlay isLoading={loading}>
+              <SensorChart 
+                data={isToday && hasRecentData ? recentData : deviceSensorData} 
+                title={`CO & CO2 ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
+                sensorTypes={[
+                  { key: 'co', color: '#ef4444', label: 'CO', unit: 'ppm' },
+                  { key: 'co2', color: '#6b7280', label: 'CO2', unit: 'ppm' }
+                ]}
+                Ylabel="ppm" 
+              />
+            </LoadingOverlay>
             
             {/* NH3 & LPG Chart */}
-            <SensorChart 
-              data={isToday && hasRecentData ? recentData : deviceSensorData} 
-              title={`NH3 & LPG ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
-              sensorTypes={[
-                { key: 'nh3', color: '#8b5cf6', label: 'NH3', unit: 'ppm' },
-                { key: 'lpg', color: '#10b981', label: 'LPG', unit: 'ppm' }
-              ]}
-              Ylabel="ppm" 
-            />
+            <LoadingOverlay isLoading={loading}>
+              <SensorChart 
+                data={isToday && hasRecentData ? recentData : deviceSensorData} 
+                title={`NH3 & LPG ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
+                sensorTypes={[
+                  { key: 'nh3', color: '#8b5cf6', label: 'NH3', unit: 'ppm' },
+                  { key: 'lpg', color: '#10b981', label: 'LPG', unit: 'ppm' }
+                ]}
+                Ylabel="ppm" 
+              />
+            </LoadingOverlay>
             
             {/* Smoke & Alcohol Chart */}
-            <SensorChart 
-              data={isToday && hasRecentData ? recentData : deviceSensorData} 
-              title={`Smoke & Alcohol ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
-              sensorTypes={[
-                { key: 'smoke', color: '#64748b', label: 'Smoke', unit: 'ppm' },
-                { key: 'alcohol', color: '#ec4899', label: 'Alcohol', unit: 'ppm' }
-              ]}
-              Ylabel="ppm" 
-            />
+            <LoadingOverlay isLoading={loading}>
+              <SensorChart 
+                data={isToday && hasRecentData ? recentData : deviceSensorData} 
+                title={`Smoke & Alcohol ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
+                sensorTypes={[
+                  { key: 'smoke', color: '#64748b', label: 'Smoke', unit: 'ppm' },
+                  { key: 'alcohol', color: '#ec4899', label: 'Alcohol', unit: 'ppm' }
+                ]}
+                Ylabel="ppm" 
+              />
+            </LoadingOverlay>
             
             {/* Rain & Sound Intensity Chart */}
-            <SensorChart 
-              data={isToday && hasRecentData ? recentData : deviceSensorData} 
-              title={`Rain & Sound Intensity ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
-              sensorTypes={[
-                { key: 'rain_intensity', color: '#0ea5e9', label: 'Rain', unit: 'mm/h' },
-                { key: 'sound_intensity', color: '#fbbf24', label: 'Sound', unit: 'dB' }
-              ]}
-              Ylabel="mm/h / dB" 
-            />
+            <LoadingOverlay isLoading={loading}>
+              <SensorChart 
+                data={isToday && hasRecentData ? recentData : deviceSensorData} 
+                title={`Rain & Sound Intensity ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
+                sensorTypes={[
+                  { key: 'rain_intensity', color: '#0ea5e9', label: 'Rain', unit: 'mm/h' },
+                  { key: 'sound_intensity', color: '#fbbf24', label: 'Sound', unit: 'dB' }
+                ]}
+                Ylabel="mm/h / dB" 
+              />
+            </LoadingOverlay>
           </div>
         )}
       </div>

@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { TableSkeleton, MapSkeleton } from '@/components/ui/skeleton';
+import { LoadingOverlay } from '@/components/ui/spinner';
 import DeviceMap from '@/components/DeviceMap';
 import { useDeviceContext } from '@/context/DeviceContext';
 import { useAuth } from '@/context/AuthContext';
@@ -251,11 +253,24 @@ export default function DevicesPage() {
     };
   }, []);
 
-  if (loading || dataLoading) {
+  if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-[80vh]">
-          <p className="text-xl">Loading devices...</p>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="h-9 w-32 bg-gray-200 rounded animate-pulse" />
+            <div className="h-10 w-32 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <MapSkeleton className="h-96" />
+          <Card>
+            <CardHeader>
+              <div className="h-6 w-24 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-64 bg-gray-200 rounded animate-pulse" />
+            </CardHeader>
+            <CardContent>
+              <TableSkeleton rows={5} cols={5} />
+            </CardContent>
+          </Card>
         </div>
       </DashboardLayout>
     );
@@ -321,7 +336,9 @@ export default function DevicesPage() {
         </div>
 
         {/* Map showing all devices with sensor data */}
-        <DeviceMap devices={devices} sensorData={latestSensorData} />
+        <LoadingOverlay isLoading={dataLoading}>
+          <DeviceMap devices={devices} sensorData={latestSensorData} />
+        </LoadingOverlay>
 
         {/* Devices table */}
         <Card>
@@ -334,7 +351,9 @@ export default function DevicesPage() {
             )}
           </CardHeader>
           <CardContent>
-            {devices.length > 0 ? (
+            {dataLoading ? (
+              <TableSkeleton rows={5} cols={isAdmin ? 5 : 4} />
+            ) : devices.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>

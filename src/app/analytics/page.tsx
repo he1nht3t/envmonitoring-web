@@ -8,6 +8,8 @@ import DeviceSelector from '@/components/DeviceSelector';
 import SensorTable from '@/components/SensorTable';
 import SensorChart from '@/components/SensorChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChartSkeleton, TableSkeleton } from '@/components/ui/skeleton';
+import { LoadingOverlay } from '@/components/ui/spinner';
 import { 
   BarChart,
   Bar,
@@ -144,11 +146,44 @@ export default function AnalyticsPage() {
   ];
 
   // Add error boundary and loading state handling
-  if (loading || devicesLoading) {
+  if (devicesLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-[80vh]">
-          <p className="text-xl">Loading analytics data...</p>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="h-9 w-32 bg-gray-200 rounded animate-pulse" />
+            <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="h-10 bg-gray-200 rounded animate-pulse" />
+            <div className="h-10 bg-gray-200 rounded animate-pulse" />
+          </div>
+          <Card>
+            <CardHeader>
+              <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardHeader className="py-2">
+                      <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-8 w-12 bg-gray-200 rounded animate-pulse mb-1" />
+                      <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ChartSkeleton />
+            <ChartSkeleton />
+            <ChartSkeleton />
+            <ChartSkeleton />
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -217,139 +252,184 @@ export default function AnalyticsPage() {
                 </TabsList>
                 
                 <TabsContent value="charts">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Temperature & Humidity Chart */}
-                    <SensorChart 
-                      data={sensorData} 
-                      sensorTypes={tempHumiditySensors} 
-                      title="Temperature & Humidity" 
-                      Ylabel="°C / %"
-                    />
-                    
-                    {/* CO & CO2 Chart */}
-                    <SensorChart 
-                      data={sensorData} 
-                      sensorTypes={coSensors} 
-                      title="CO & CO2" 
-                      Ylabel="ppm"
-                    />
-                    
-                    {/* NH3 & LPG Chart */}
-                    <SensorChart 
-                      data={sensorData} 
-                      sensorTypes={gasSensors} 
-                      title="NH3 & LPG" 
-                      Ylabel="ppm"
-                    />
-                    
-                    {/* Smoke & Alcohol Chart */}
-                    <SensorChart 
-                      data={sensorData} 
-                      sensorTypes={smokeSensors} 
-                      title="Smoke & Alcohol" 
-                      Ylabel="ppm"
-                    />
-                    
-                    {/* Rain & Sound Intensity Chart */}
-                    <SensorChart 
-                      data={sensorData} 
-                      sensorTypes={environmentalSensors} 
-                      title="Rain & Sound Intensity" 
-                      Ylabel="mm/h / dB"
-                    />
-                  </div>
+                  {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <ChartSkeleton />
+                      <ChartSkeleton />
+                      <ChartSkeleton />
+                      <ChartSkeleton />
+                      <ChartSkeleton />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Temperature & Humidity Chart */}
+                      <LoadingOverlay isLoading={loading}>
+                        <SensorChart 
+                          data={sensorData} 
+                          sensorTypes={tempHumiditySensors} 
+                          title="Temperature & Humidity" 
+                          Ylabel="°C / %"
+                        />
+                      </LoadingOverlay>
+                      
+                      {/* CO & CO2 Chart */}
+                      <LoadingOverlay isLoading={loading}>
+                        <SensorChart 
+                          data={sensorData} 
+                          sensorTypes={coSensors} 
+                          title="CO & CO2" 
+                          Ylabel="ppm"
+                        />
+                      </LoadingOverlay>
+                      
+                      {/* NH3 & LPG Chart */}
+                      <LoadingOverlay isLoading={loading}>
+                        <SensorChart 
+                          data={sensorData} 
+                          sensorTypes={gasSensors} 
+                          title="NH3 & LPG" 
+                          Ylabel="ppm"
+                        />
+                      </LoadingOverlay>
+                      
+                      {/* Smoke & Alcohol Chart */}
+                      <LoadingOverlay isLoading={loading}>
+                        <SensorChart 
+                          data={sensorData} 
+                          sensorTypes={smokeSensors} 
+                          title="Smoke & Alcohol" 
+                          Ylabel="ppm"
+                        />
+                      </LoadingOverlay>
+                      
+                      {/* Rain & Sound Intensity Chart */}
+                      <LoadingOverlay isLoading={loading}>
+                        <SensorChart 
+                          data={sensorData} 
+                          sensorTypes={environmentalSensors} 
+                          title="Rain & Sound Intensity" 
+                          Ylabel="mm/h / dB"
+                        />
+                      </LoadingOverlay>
+                    </div>
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="distribution">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Sensor Data Distribution</CardTitle>
-                      </CardHeader>
-                      <CardContent className="h-[400px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={preparePieData()}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              outerRadius={150}
-                              fill="#8884d8"
-                              dataKey="value"
-                            >
-                              {preparePieData().map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip 
-                              formatter={(value) => typeof value === 'number' ? value.toFixed(2) : value}
-                              contentStyle={{
-                                backgroundColor: isDarkMode ? '#333' : '#fff',
-                                borderColor: isDarkMode ? '#555' : '#ccc',
-                                color: isDarkMode ? '#fff' : '#333'
-                              }}
-                            />
-                            <Legend wrapperStyle={{ color: isDarkMode ? '#fff' : '#000' }} />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Air Quality Metrics</CardTitle>
-                      </CardHeader>
-                      <CardContent className="h-[400px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart
-                            layout="vertical"
-                            data={[
-                              { name: 'CO', value: calculateAverages().co || 0 },
-                              { name: 'CO2', value: calculateAverages().co2 || 0 },
-                              { name: 'NH3', value: calculateAverages().nh3 || 0 },
-                              { name: 'LPG', value: calculateAverages().lpg || 0 },
-                              { name: 'Smoke', value: calculateAverages().smoke || 0 },
-                              { name: 'Alcohol', value: calculateAverages().alcohol || 0 },
-                            ]}
-                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                          >
-                            <CartesianGrid 
-                              strokeDasharray="3 3" 
-                              stroke={isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}
-                            />
-                            <XAxis 
-                              type="number" 
-                              stroke={isDarkMode ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)"}
-                              tick={{ fill: isDarkMode ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.7)" }}
-                            />
-                            <YAxis 
-                              dataKey="name" 
-                              type="category" 
-                              stroke={isDarkMode ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)"}
-                              tick={{ fill: isDarkMode ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.7)" }}
-                            />
-                            <Tooltip 
-                              contentStyle={{
-                                backgroundColor: isDarkMode ? '#333' : '#fff',
-                                borderColor: isDarkMode ? '#555' : '#ccc',
-                                color: isDarkMode ? '#fff' : '#333'
-                              }}
-                            />
-                            <Legend wrapperStyle={{ color: isDarkMode ? '#fff' : '#000' }} />
-                            <Bar dataKey="value" fill={isDarkMode ? "#8b5cf6" : "#8884d8"} name="Value (ppm)" />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </CardContent>
-                    </Card>
-                  </div>
+                  {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <ChartSkeleton className="h-[400px]" />
+                      <ChartSkeleton className="h-[400px]" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <LoadingOverlay isLoading={loading}>
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Sensor Data Distribution</CardTitle>
+                          </CardHeader>
+                          <CardContent className="h-[400px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={preparePieData()}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={false}
+                                  outerRadius={150}
+                                  fill="#8884d8"
+                                  dataKey="value"
+                                >
+                                  {preparePieData().map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip 
+                                  formatter={(value) => typeof value === 'number' ? value.toFixed(2) : value}
+                                  contentStyle={{
+                                    backgroundColor: isDarkMode ? '#333' : '#fff',
+                                    borderColor: isDarkMode ? '#555' : '#ccc',
+                                    color: isDarkMode ? '#fff' : '#333'
+                                  }}
+                                />
+                                <Legend wrapperStyle={{ color: isDarkMode ? '#fff' : '#000' }} />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </CardContent>
+                        </Card>
+                      </LoadingOverlay>
+                      
+                      <LoadingOverlay isLoading={loading}>
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Air Quality Metrics</CardTitle>
+                          </CardHeader>
+                          <CardContent className="h-[400px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart
+                                layout="vertical"
+                                data={[
+                                  { name: 'CO', value: calculateAverages().co || 0 },
+                                  { name: 'CO2', value: calculateAverages().co2 || 0 },
+                                  { name: 'NH3', value: calculateAverages().nh3 || 0 },
+                                  { name: 'LPG', value: calculateAverages().lpg || 0 },
+                                  { name: 'Smoke', value: calculateAverages().smoke || 0 },
+                                  { name: 'Alcohol', value: calculateAverages().alcohol || 0 },
+                                ]}
+                                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                              >
+                                <CartesianGrid 
+                                  strokeDasharray="3 3" 
+                                  stroke={isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"}
+                                />
+                                <XAxis 
+                                  type="number" 
+                                  stroke={isDarkMode ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)"}
+                                  tick={{ fill: isDarkMode ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.7)" }}
+                                />
+                                <YAxis 
+                                  dataKey="name" 
+                                  type="category" 
+                                  stroke={isDarkMode ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.5)"}
+                                  tick={{ fill: isDarkMode ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.7)" }}
+                                />
+                                <Tooltip 
+                                  contentStyle={{
+                                    backgroundColor: isDarkMode ? '#333' : '#fff',
+                                    borderColor: isDarkMode ? '#555' : '#ccc',
+                                    color: isDarkMode ? '#fff' : '#333'
+                                  }}
+                                />
+                                <Legend wrapperStyle={{ color: isDarkMode ? '#fff' : '#000' }} />
+                                <Bar dataKey="value" fill={isDarkMode ? "#8b5cf6" : "#8884d8"} name="Value (ppm)" />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </CardContent>
+                        </Card>
+                      </LoadingOverlay>
+                    </div>
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="table">
-                  <SensorTable 
-                    data={sensorData} 
-                    deviceName={getSelectedDeviceName()} 
-                  />
+                  {loading ? (
+                    <Card>
+                      <CardHeader>
+                        <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                      </CardHeader>
+                      <CardContent>
+                        <TableSkeleton rows={10} cols={11} />
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <LoadingOverlay isLoading={loading}>
+                      <SensorTable 
+                        data={sensorData} 
+                        deviceName={getSelectedDeviceName()} 
+                      />
+                    </LoadingOverlay>
+                  )}
                 </TabsContent>
               </Tabs>
             </>
