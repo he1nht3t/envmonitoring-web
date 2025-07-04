@@ -33,7 +33,15 @@ export default function Home() {
 
       try {
         setLoading(true);
-        const latestData = await fetchLatestSensorData(selectedDate);
+        
+        // Create start and end dates for the selected day
+        const startDate = new Date(selectedDate);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = new Date(selectedDate);
+        endDate.setHours(23, 59, 59, 999);
+        
+        const latestData = await fetchLatestSensorData(startDate, endDate);
         
         if (!isSubscribed) return;
 
@@ -98,7 +106,15 @@ export default function Home() {
       
       try {
         console.log('Loading sensor data for device:', selectedDeviceId, 'date:', format(selectedDate, 'yyyy-MM-dd'));
-        const data = await fetchSensorData(selectedDeviceId, 100, selectedDate);
+        
+        // Create start and end dates for the selected day
+        const startDate = new Date(selectedDate);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = new Date(selectedDate);
+        endDate.setHours(23, 59, 59, 999);
+        
+        const data = await fetchSensorData(selectedDeviceId, 1000, startDate, endDate);
         console.log('Sensor data loaded:', data.length);
         setDeviceSensorData(data);
       } catch (error) {
@@ -115,17 +131,7 @@ export default function Home() {
     return device ? device.name : 'Unknown Device';
   };
 
-  // Filter data to show only the last 5 minutes
-  const getRecentData = () => {
-    if (!deviceSensorData.length) return [];
-    
-    const fiveMinutesAgo = new Date();
-    fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
-    
-    return deviceSensorData.filter(reading => 
-      new Date(reading.created_at) >= fiveMinutesAgo
-    );
-  };
+
 
   if (devicesLoading) {
     return (
@@ -155,10 +161,6 @@ export default function Home() {
     );
   }
 
-  // Get recent data for charts
-  const recentData = getRecentData();
-  const hasRecentData = recentData.length > 0;
-  
   // Format date for display
   const formattedDate = format(selectedDate, 'MMMM d, yyyy');
   const isToday = isSameDay(selectedDate, new Date());
@@ -224,13 +226,9 @@ export default function Home() {
         </div>
         
         {/* Charts section */}
-        {deviceSensorData.length === 0 ? (
+        {deviceSensorData.length === 0 && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
             <p className="text-yellow-800">No data available for {formattedDate}.</p>
-          </div>
-        ) : (!hasRecentData && isToday) && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-            <p className="text-yellow-800">No data from the last 5 minutes is available. Showing all data for {formattedDate}.</p>
           </div>
         )}
         
@@ -247,8 +245,8 @@ export default function Home() {
             {/* Temperature & Humidity Chart */}
             <LoadingOverlay isLoading={loading}>
               <SensorChart 
-                data={isToday && hasRecentData ? recentData : deviceSensorData} 
-                title={`Temperature & Humidity ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
+                data={deviceSensorData} 
+                title={`Temperature & Humidity (${formattedDate})`} 
                 sensorTypes={[
                   { key: 'temperature', color: '#f97316', label: 'Temperature', unit: '°C' },
                   { key: 'humidity', color: '#3b82f6', label: 'Humidity', unit: '%' }
@@ -260,8 +258,8 @@ export default function Home() {
             {/* CO & CO2 Chart */}
             <LoadingOverlay isLoading={loading}>
               <SensorChart 
-                data={isToday && hasRecentData ? recentData : deviceSensorData} 
-                title={`CO & CO2 ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
+                data={deviceSensorData} 
+                title={`CO & CO2 (${formattedDate})`} 
                 sensorTypes={[
                   { key: 'co', color: '#ef4444', label: 'CO', unit: 'ppm' },
                   { key: 'co2', color: '#6b7280', label: 'CO2', unit: 'ppm' }
@@ -273,8 +271,8 @@ export default function Home() {
             {/* NH3 & LPG Chart */}
             <LoadingOverlay isLoading={loading}>
               <SensorChart 
-                data={isToday && hasRecentData ? recentData : deviceSensorData} 
-                title={`NH3 & LPG ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
+                data={deviceSensorData} 
+                title={`NH3 & LPG (${formattedDate})`} 
                 sensorTypes={[
                   { key: 'nh3', color: '#8b5cf6', label: 'NH3', unit: 'ppm' },
                   { key: 'lpg', color: '#10b981', label: 'LPG', unit: 'ppm' }
@@ -286,8 +284,8 @@ export default function Home() {
             {/* Smoke & Alcohol Chart */}
             <LoadingOverlay isLoading={loading}>
               <SensorChart 
-                data={isToday && hasRecentData ? recentData : deviceSensorData} 
-                title={`Smoke & Alcohol ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
+                data={deviceSensorData} 
+                title={`Smoke & Alcohol (${formattedDate})`} 
                 sensorTypes={[
                   { key: 'smoke', color: '#64748b', label: 'Smoke', unit: 'ppm' },
                   { key: 'alcohol', color: '#ec4899', label: 'Alcohol', unit: 'ppm' }
@@ -299,8 +297,8 @@ export default function Home() {
             {/* Rain & Sound Intensity Chart */}
             <LoadingOverlay isLoading={loading}>
               <SensorChart 
-                data={isToday && hasRecentData ? recentData : deviceSensorData} 
-                title={`Rain & Sound Intensity ${isToday && hasRecentData ? '(Last 5 min)' : `(${formattedDate})`}`} 
+                data={deviceSensorData} 
+                title={`Rain & Sound Intensity (${formattedDate})`} 
                 sensorTypes={[
                   { key: 'rain_intensity', color: '#0ea5e9', label: 'Rain', unit: 'mm/h' },
                   { key: 'sound_intensity', color: '#fbbf24', label: 'Sound', unit: 'dB' }

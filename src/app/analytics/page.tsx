@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-import { SensorData, fetchSensorData } from '@/lib/supabase';
+import { SensorData, fetchAllSensorData } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import DeviceSelector from '@/components/DeviceSelector';
 import SensorTable from '@/components/SensorTable';
@@ -10,6 +10,9 @@ import SensorChart from '@/components/SensorChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChartSkeleton, TableSkeleton } from '@/components/ui/skeleton';
 import { LoadingOverlay } from '@/components/ui/spinner';
+import { TrendingUp, BarChart3, Database, Calendar, AlertCircle } from 'lucide-react';
+import MultiDeviceSelector from '@/components/MultiDeviceSelector';
+import MultiDeviceComparisonChart from '@/components/MultiDeviceComparisonChart';
 import { 
   BarChart,
   Bar,
@@ -23,11 +26,16 @@ import {
   Tooltip,
   Legend
 } from 'recharts';
-import { format, isSameDay } from 'date-fns';
+import { format } from 'date-fns';
 import { useDeviceContext } from '@/context/DeviceContext';
 import { useDateContext } from '@/context/DateContext';
 import { useTheme } from '@/context/ThemeContext';
 import DateSelector from '@/components/DateSelector';
+import TimeRangePicker from '@/components/TimeRangePicker';
+import HealthRiskIndicator from '@/components/HealthRiskIndicator';
+import StatisticalSummary from '@/components/StatisticalSummary';
+import TrendAnalysisChart from '@/components/TrendAnalysisChart';
+import { useAnalyticsStore } from '@/hooks/useAnalyticsStore';
 
 // Define the type for sensor chart key
 type SensorKey = keyof Omit<SensorData, 'id' | 'device_id' | 'created_at'>;
@@ -35,11 +43,15 @@ type SensorKey = keyof Omit<SensorData, 'id' | 'device_id' | 'created_at'>;
 export default function AnalyticsPage() {
   const { devices, selectedDeviceId, loading: devicesLoading } = useDeviceContext();
   const { selectedDate } = useDateContext();
-  const [sensorData, setSensorData] = useState<SensorData[]>([]);
-  const [loading, setLoading] = useState(true);
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
+  const { selectedTimeRange, customStartDate, customEndDate, getDateRangeFromTimeRange } = useAnalyticsStore();
   
+  const [sensorData, setSensorData] = useState<SensorData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedDevicesForComparison, setSelectedDevicesForComparison] = useState<string[]>(selectedDeviceId ? [selectedDeviceId] : []);
+
   // Fetch sensor data when selected device or date changes
   useEffect(() => {
     async function loadSensorData() {
@@ -47,7 +59,8 @@ export default function AnalyticsPage() {
       
       try {
         setLoading(true);
-        const data = await fetchSensorData(selectedDeviceId, 100, selectedDate);
+        const { start, end } = getDateRangeFromTimeRange(selectedDate);
+      const data = await fetchAllSensorData(selectedDeviceId, start, end);
         setSensorData(data);
       } catch (error) {
         console.error('Error loading sensor data:', error);
@@ -57,7 +70,7 @@ export default function AnalyticsPage() {
     }
     
     loadSensorData();
-  }, [selectedDeviceId, selectedDate]);
+  }, [selectedDeviceId, selectedDate, selectedTimeRange, customStartDate, customEndDate, getDateRangeFromTimeRange]);
   
   // Get the selected device name
   const getSelectedDeviceName = () => {
@@ -192,35 +205,79 @@ export default function AnalyticsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Analytics</h1>
-          <div className="text-sm text-muted-foreground">
-            Viewing data for: <span className="font-medium">{format(selectedDate, 'MMMM d, yyyy')}</span> 
-            {isSameDay(selectedDate, new Date()) && <span className="ml-1 text-green-500">(Today)</span>}
-          </div>
-        </div>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Device selector */}
-            <DeviceSelector />
-            
-            {/* Date selector */}
-            <DateSelector />
+          <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+            <h1 className="text-3xl font-bold">Analytics</h1>
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
+              <DeviceSelector />
+              <TimeRangePicker />
+              <DateSelector />
+            </div>
           </div>
           
+          <div className="space-y-4">
+          
           {sensorData.length === 0 ? (
-            <Card>
-              <CardContent className="py-8">
-                <div className="text-center">
-                  <h3 className="text-lg font-medium mb-2">No data available</h3>
-                  <p className="text-muted-foreground">
-                    There is no sensor data available for {format(selectedDate, 'MMMM d, yyyy')}.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
+              <Card className="w-full max-w-md mx-auto">
+                <CardContent className="py-12">
+                  <div className="text-center space-y-6">
+                    {/* Icon */}
+                    <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                      <Database className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    
+                    {/* Title */}
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                        No Data Available
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        No sensor data found for the selected criteria
+                      </p>
+                    </div>
+                    
+                    {/* Date info */}
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
+                        <Calendar className="w-4 h-4" />
+                        <span className="font-medium">{format(selectedDate, 'MMMM d, yyyy')}</span>
+                      </div>
+                      
+                      {selectedDeviceId && (
+                        <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
+                          <Database className="w-4 h-4" />
+                          <span>Device: {getSelectedDeviceName()}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Suggestions */}
+                    <div className="space-y-3">
+                      <div className="flex items-start space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                        <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <div className="text-left">
+                          <p className="font-medium mb-1">Try the following:</p>
+                          <ul className="space-y-1 text-xs">
+                            <li>• Select a different date</li>
+                            <li>• Choose another device</li>
+                            <li>• Check if the device was active on this date</li>
+                            <li>• Verify your time range settings</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           ) : (
             <>
+              {/* Health Risk Indicator and Statistical Summary */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <HealthRiskIndicator sensorData={sensorData} />
+                <StatisticalSummary sensorData={sensorData} />
+              </div>
+              
               {/* Analytics overview */}
               <Card className="col-span-3">
                 <CardHeader>
@@ -244,12 +301,134 @@ export default function AnalyticsPage() {
               </Card>
             
               {/* Tabs for different views */}
-              <Tabs defaultValue="charts">
-                <TabsList>
-                  <TabsTrigger value="charts">Charts</TabsTrigger>
-                  <TabsTrigger value="distribution">Distribution</TabsTrigger>
-                  <TabsTrigger value="table">Table</TabsTrigger>
-                </TabsList>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <div className="overflow-x-auto scrollbar-hide mobile-scroll px-1">
+                  <TabsList className="inline-flex gap-2 min-w-max">
+                  <TabsTrigger value="overview" className="whitespace-nowrap">Overview</TabsTrigger>
+                  <TabsTrigger value="trends" className="whitespace-nowrap">Trends</TabsTrigger>
+                  <TabsTrigger value="charts" className="whitespace-nowrap">Charts</TabsTrigger>
+                  <TabsTrigger value="comparison" className="whitespace-nowrap">Compare</TabsTrigger>
+                  <TabsTrigger value="distribution" className="whitespace-nowrap">Distribution</TabsTrigger>
+                  <TabsTrigger value="table" className="whitespace-nowrap">Table</TabsTrigger>
+                  </TabsList>
+                </div>
+                
+                <TabsContent value="overview" className="space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Quick Stats Cards */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <BarChart3 className="h-5 w-5" />
+                          Quick Statistics
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {sensorData.length}
+                            </div>
+                            <div className="text-sm text-muted-foreground">Data Points</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-600">
+                              {calculateAverages().temperature.toFixed(1)}°C
+                            </div>
+                            <div className="text-sm text-muted-foreground">Avg Temperature</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-purple-600">
+                              {calculateAverages().humidity.toFixed(1)}%
+                            </div>
+                            <div className="text-sm text-muted-foreground">Avg Humidity</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-orange-600">
+                              {calculateAverages().co.toFixed(1)} ppm
+                            </div>
+                            <div className="text-sm text-muted-foreground">Avg CO</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    {/* Recent Trends */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <TrendingUp className="h-5 w-5" />
+                          Recent Trends
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {Object.entries({
+                            Temperature: { value: calculateAverages().temperature, unit: '°C', trend: 'stable' },
+                            Humidity: { value: calculateAverages().humidity, unit: '%', trend: 'increasing' },
+                            'CO Level': { value: calculateAverages().co, unit: 'ppm', trend: 'decreasing' },
+                            'Air Quality': { value: calculateAverages().co2, unit: 'ppm', trend: 'stable' }
+                          }).map(([key, data]) => (
+                            <div key={key} className="flex items-center justify-between">
+                              <span className="text-sm font-medium">{key}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">{data.value.toFixed(1)} {data.unit}</span>
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  data.trend === 'increasing' ? 'bg-green-100 text-green-700' :
+                                  data.trend === 'decreasing' ? 'bg-red-100 text-red-700' :
+                                  'bg-gray-100 text-gray-700'
+                                }`}>
+                                  {data.trend === 'increasing' ? '↗' : data.trend === 'decreasing' ? '↘' : '→'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="trends" className="space-y-4">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <TrendAnalysisChart
+                      sensorData={sensorData}
+                      sensorKey="temperature"
+                      title="Temperature"
+                      unit="°C"
+                    />
+                    <TrendAnalysisChart
+                      sensorData={sensorData}
+                      sensorKey="humidity"
+                      title="Humidity"
+                      unit="%"
+                    />
+                    <TrendAnalysisChart
+                      sensorData={sensorData}
+                      sensorKey="co"
+                      title="Carbon Monoxide"
+                      unit="ppm"
+                    />
+                    <TrendAnalysisChart
+                      sensorData={sensorData}
+                      sensorKey="co2"
+                      title="Carbon Dioxide"
+                      unit="ppm"
+                    />
+                    <TrendAnalysisChart
+                      sensorData={sensorData}
+                      sensorKey="nh3"
+                      title="Ammonia"
+                      unit="ppm"
+                    />
+                    <TrendAnalysisChart
+                      sensorData={sensorData}
+                      sensorKey="lpg"
+                      title="LPG"
+                      unit="ppm"
+                    />
+                  </div>
+                </TabsContent>
                 
                 <TabsContent value="charts">
                   {loading ? (
@@ -313,6 +492,65 @@ export default function AnalyticsPage() {
                       </LoadingOverlay>
                     </div>
                   )}
+                </TabsContent>
+                
+                <TabsContent value="comparison" className="space-y-4">
+                  <div className="space-y-4">
+                    {/* Multi-device selector */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Select Devices to Compare</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                  <MultiDeviceSelector 
+                    selectedDeviceIds={selectedDevicesForComparison}
+                    onSelectionChange={setSelectedDevicesForComparison}
+                  />
+                      </CardContent>
+                    </Card>
+                    
+                    {/* Comparison charts */}
+                    {selectedDevicesForComparison.length > 0 && (
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <MultiDeviceComparisonChart
+                          selectedDeviceIds={selectedDevicesForComparison}
+                          sensorType="temperature"
+                          title="Temperature Comparison"
+                          unit="°C"
+                        />
+                        <MultiDeviceComparisonChart
+                          selectedDeviceIds={selectedDevicesForComparison}
+                          sensorType="humidity"
+                          title="Humidity Comparison"
+                          unit="%"
+                        />
+                        <MultiDeviceComparisonChart
+                          selectedDeviceIds={selectedDevicesForComparison}
+                          sensorType="co"
+                          title="Carbon Monoxide Comparison"
+                          unit=" ppm"
+                        />
+                        <MultiDeviceComparisonChart
+                          selectedDeviceIds={selectedDevicesForComparison}
+                          sensorType="co2"
+                          title="Carbon Dioxide Comparison"
+                          unit=" ppm"
+                        />
+                        <MultiDeviceComparisonChart
+                          selectedDeviceIds={selectedDevicesForComparison}
+                          sensorType="nh3"
+                          title="Ammonia Comparison"
+                          unit=" ppm"
+                        />
+                        <MultiDeviceComparisonChart
+                          selectedDeviceIds={selectedDevicesForComparison}
+                          sensorType="lpg"
+                          title="LPG Comparison"
+                          unit=" ppm"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </TabsContent>
                 
                 <TabsContent value="distribution">

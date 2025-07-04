@@ -46,7 +46,7 @@ export async function fetchDevices() {
 }
 
 // Fetch sensor data for a specific device with optional date filter
-export async function fetchSensorData(deviceId: string, limit = 100, date?: Date) {
+export async function fetchSensorData(deviceId: string, limit = 100, startDate?: Date, endDate?: Date) {
   let query = supabase
     .from('sensor_data')
     .select('*')
@@ -55,16 +55,35 @@ export async function fetchSensorData(deviceId: string, limit = 100, date?: Date
     .limit(limit);
   
   // If date is provided, filter data for that specific day
-  if (date) {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-    
+  if (startDate && endDate) {
     query = query
-      .gte('created_at', startOfDay.toISOString())
-      .lte('created_at', endOfDay.toISOString());
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString());
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) {
+    console.error('Error fetching sensor data:', error);
+    return [];
+  }
+  
+  return data as SensorData[];
+}
+
+// Fetch all sensor data for a specific device with optional date filter
+export async function fetchAllSensorData(deviceId: string, startDate?: Date, endDate?: Date) {
+  let query = supabase
+    .from('sensor_data')
+    .select('*')
+    .eq('device_id', deviceId)
+    .order('created_at', { ascending: false });
+  
+  // If date is provided, filter data for that specific day
+  if (startDate && endDate) {
+    query = query
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString());
   }
   
   const { data, error } = await query;
@@ -78,23 +97,17 @@ export async function fetchSensorData(deviceId: string, limit = 100, date?: Date
 }
 
 // Fetch latest sensor data for all devices with optional date filter
-export async function fetchLatestSensorData(date?: Date) {
+export async function fetchLatestSensorData(startDate?: Date, endDate?: Date) {
   let query = supabase
     .from('sensor_data')
     .select('*')
     .order('created_at', { ascending: false });
   
   // If date is provided, filter data for that specific day
-  if (date) {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-    
+  if (startDate && endDate) {
     query = query
-      .gte('created_at', startOfDay.toISOString())
-      .lte('created_at', endOfDay.toISOString());
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString());
   }
   
   const { data, error } = await query;
